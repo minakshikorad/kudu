@@ -39,6 +39,8 @@ class TestOptions extends KuduTestSuite {
         |  --keepAlivePeriodMs <value>
         |                           Sets the period at which to send keep-alive requests to the tablet server to ensure that scanners do not time out. Default: 15000
         |  --failOnFirstError       Whether to fail the backup job as soon as a single table backup fails. Default: false
+        |  --coalesceOutputPartitions Sets the max number of files that should be generated from backup process. Default: None
+        |  --repartitionOutput      Sets the repartition output. Maximum number of output. Default: None
         |  --help                   prints this usage text
         |  <table>...               A list of tables to be backed up.""".stripMargin
     assertEquals(expectedStr, BackupOptions.parser.usage)

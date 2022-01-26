@@ -18,6 +18,7 @@
 package org.apache.kudu.backup
 
 import org.apache.kudu.spark.kudu.KuduContext
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SparkSession
 import org.apache.yetus.audience.InterfaceAudience
@@ -90,8 +91,21 @@ object KuduBackup {
 
     // Write the data to the backup path.
     // The backup path contains the timestampMs and should not already exist.
-    val writer = df.write.mode(SaveMode.ErrorIfExists)
-    writer
+    // Coalesce takes precedence over repartition.
+    tableOptions.coalesceOutputPartitions
+      .map({ c =>
+        log.info(s"Coalescing output to $c files"); df.coalesce(c)
+      })
+      .getOrElse {
+        tableOptions.repartitionOutput
+          .map { rp =>
+            log.info(s"Repartitioning output to $rp files")
+            df.repartition(rp)
+          }
+          .getOrElse(df)
+      }
+      .write
+      .mode(SaveMode.ErrorIfExists)
       .format(tableOptions.format)
       .save(backupPath.toString)
 

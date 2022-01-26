@@ -41,7 +41,9 @@ case class BackupOptions(
     keepAlivePeriodMs: Long = BackupOptions.DefaultKeepAlivePeriodMs,
     failOnFirstError: Boolean = BackupOptions.DefaultFailOnFirstError,
     numParallelBackups: Int = BackupOptions.DefaultNumParallelBackups,
-    splitSizeBytes: Option[Long] = None)
+    splitSizeBytes: Option[Long] = None,
+    coalesceOutputPartitions: Option[Int] = BackupOptions.DefaultCoalesceOutputPartitions,
+    repartitionOutput: Option[Int] = BackupOptions.DefaultRepartitionOutput)
 
 object BackupOptions {
   val DefaultForceFull: Boolean = false
@@ -57,6 +59,9 @@ object BackupOptions {
   val DefaultFailOnFirstError: Boolean = false
   val DefaultNumParallelBackups = 1
   val DefaultSplitSizeBytes: Option[Long] = None
+
+  val DefaultCoalesceOutputPartitions: Option[Int] = None
+  val DefaultRepartitionOutput: Option[Int] = None
 
   // We use the program name to make the help output show a the spark invocation required.
   val ClassName: String = KuduBackup.getClass.getCanonicalName.dropRight(1) // Remove trailing `$`
@@ -156,6 +161,18 @@ object BackupOptions {
             "will be split to generate uniform task sizes instead of the default of 1 task per " +
             "tablet. This option is experimental.")
         .hidden()
+        .optional()
+
+      opt[Int]("coalesceOutputPartitions")
+        .action((v, o) => o.copy(coalesceOutputPartitions = Some(v)))
+        .text(
+          "Sets the max number of files that should be generated from backup process. Default: " +
+            DefaultCoalesceOutputPartitions)
+        .optional()
+
+      opt[Int]("repartitionOutput")
+        .action((v, o) => o.copy(repartitionOutput = Some(v)))
+        .text("Sets the repartition output. Maximum number of output. Default: " + DefaultRepartitionOutput)
         .optional()
 
       help("help").text("prints this usage text")
